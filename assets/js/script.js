@@ -1,11 +1,7 @@
 'use strict';
 
-
-
 // element toggle function
 const elementToggleFunc = function (elem) { elem.classList.toggle("active"); }
-
-
 
 // sidebar variables
 const sidebar = document.querySelector("[data-sidebar]");
@@ -13,8 +9,6 @@ const sidebarBtn = document.querySelector("[data-sidebar-btn]");
 
 // sidebar toggle functionality for mobile
 sidebarBtn.addEventListener("click", function () { elementToggleFunc(sidebar); });
-
-
 
 // testimonials variables
 const testimonialsItem = document.querySelectorAll("[data-testimonials-item]");
@@ -52,8 +46,6 @@ for (let i = 0; i < testimonialsItem.length; i++) {
 // add click event to modal close button
 modalCloseBtn.addEventListener("click", testimonialsModalFunc);
 overlay.addEventListener("click", testimonialsModalFunc);
-
-
 
 // custom select variables
 const select = document.querySelector("[data-select]");
@@ -113,14 +105,15 @@ for (let i = 0; i < filterBtn.length; i++) {
 
 }
 
-
-
 // contact form variables
 const form = document.querySelector("[data-form]");
 const formInputs = document.querySelectorAll("[data-form-input]");
 const formBtn = document.querySelector("[data-form-btn]");
 
-// add event to all form input field
+// form submission variables
+const scriptURL = 'https://script.google.com/macros/s/AKfycbxJfrImRF3IdISWO-i4kQNZpUUYx5casJh_j4ziDJucHhwICXYeJP_4xjaa7Igl9u92vA/exec';
+
+// add event to all form input fields
 for (let i = 0; i < formInputs.length; i++) {
   formInputs[i].addEventListener("input", function () {
 
@@ -134,7 +127,25 @@ for (let i = 0; i < formInputs.length; i++) {
   });
 }
 
+// add event listener for form submission
+form.addEventListener('submit', e => {
+  e.preventDefault();
 
+  // Disable the submit button to prevent multiple submissions
+  formBtn.setAttribute("disabled", "");
+
+  // Submit form data
+  fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+    .then(response => {
+      alert("Thank you! Your form has been submitted successfully.");
+      window.location.reload();  // Optionally reload the page after submission
+    })
+    .catch(error => {
+      console.error('Error!', error.message);
+      alert("There was an error submitting the form. Please try again.");
+      formBtn.removeAttribute("disabled");  // Re-enable the button in case of error
+    });
+});
 
 // page navigation variables
 const navigationLinks = document.querySelectorAll("[data-nav-link]");
