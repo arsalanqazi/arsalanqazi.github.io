@@ -85,7 +85,7 @@
     font-size: 14px;
     color: var(--text-secondary);
     margin: 4px 0 0 0;
-    max-width: 500px;
+    max-width: 520px;
   }
 
   /* Status Indicator */
@@ -141,11 +141,13 @@
     gap: 20px;
   }
 
-  .eye-title {
+  .eye-description {
     margin: 0;
-    color: var(--accent);
-    font-size: 18px;
+    color: #ffd166;
+    font-size: 15px;
     text-align: center;
+    line-height: 1.5;
+    font-weight: normal;
   }
 
   svg#eyeSVG {
@@ -482,8 +484,13 @@
   <div class="main">
     <!-- LEFT: Eye + controls -->
     <section class="left" aria-label="Interactive eye controls">
-      <div class="eye-stage" role="region" aria-labelledby="eyeTitle">
-        <h2 id="eyeTitle" class="eye-title">The Eye — Try different DNA choices</h2>
+      <div class="eye-stage" role="region" aria-labelledby="eyeDescription">
+        <p id="eyeDescription" class="eye-description">
+          This portal helps you play with three genes associated with eye color. These are HERC2, SLC24A4 and OCA2. Each gene has more than one variant. The final colour of your eye is decided by what set of variants you are blessed with from your mother and your father.<br><br>
+          HERC2 has three variants which are responsible for eye colour. SLC24A4 and OCA2 contribute to the shade of those colours.<br><br>
+          Choose a set of variant for each of the three genes (you can do that randomly) and see the colour in the eye below change accordingly.<br><br>
+          Can you find the set of variants responsible for your eye colour?!
+        </p>
 
         <!-- Eye svg (center stage) -->
         <svg id="eyeSVG" viewBox="0 0 280 220" role="img" aria-label="Illustration of an eye">
@@ -501,7 +508,7 @@
           <div class="snp-row" role="form" aria-label="SNP genotype selectors">
             <div class="snp-card">
               <div>
-                <div class="snp-name">HERC2<span class="snp-gene">(rs12913832)</span></div>
+                <div class="snp-name">HERC2 Gene<span class="snp-gene">(rs12913832)</span></div>
               </div>
               <select id="snp1" class="snp-select" aria-label="rs12913832 genotype">
                 <option value="0">AA — Brown eyes likely</option>
@@ -512,23 +519,23 @@
 
             <div class="snp-card">
               <div>
-                <div class="snp-name">SLC24A4<span class="snp-gene">(rs12896399)</span></div>
+                <div class="snp-name">SLC24A4 Gene<span class="snp-gene">(rs12896399)</span></div>
               </div>
               <select id="snp2" class="snp-select" aria-label="rs12896399 genotype">
-                <option value="0">No lightening effect</option>
-                <option value="0.5">Some lightening effect</option>
-                <option value="1">Strong lightening effect</option>
+                <option value="0">TT — No lightening effect</option>
+                <option value="0.5">TG —Some lightening effect</option>
+                <option value="1">GG —Strong lightening effect</option>
               </select>
             </div>
 
             <div class="snp-card">
               <div>
-                <div class="snp-name">OCA2<span class="snp-gene">(rs1800407)</span></div>
+                <div class="snp-name">OCA2 Gene<span class="snp-gene">(rs1800407)</span></div>
               </div>
               <select id="snp3" class="snp-select" aria-label="rs1800407 genotype">
-                <option value="0">No lightening effect</option>
-                <option value="0.5">Some lightening effect</option>
-                <option value="1">Strong lightening effect</option>
+                <option value="0">CC — No lightening effect</option>
+                <option value="0.5">CT — Some lightening effect</option>
+                <option value="1">TT — Strong lightening effect</option>
               </select>
             </div>
           </div>
@@ -866,10 +873,4 @@ async function loadAndRenderSequence(){
 })();
 </script>
 </body>
-
 </html>
-
-
-
-
-
