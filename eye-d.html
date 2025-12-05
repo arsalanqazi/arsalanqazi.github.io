@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BioDesign: Eye Color</title>
+
+<style>
+  /* --- 1. SETTING THE STAGE (Variables & Reset) --- */
+  :root {
+    --bg-dark: #050510;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --accent-glow: #00f2ff;
+    --text-main: #ffffff;
+    --text-muted: #8b9bb4;
+    
+    /* Dynamic Colors (Updated by JS) */
+    --iris-color: #3b82f6; 
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0; height: 100vh; width: 100vw; overflow: hidden;
+    background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #000000 100%);
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text-main);
+    display: flex; justify-content: center; align-items: center;
+    perspective: 1500px; /* Essential for Parallax */
+  }
+
+  /* --- 2. BACKGROUND AMBIENCE (Fluid Orbs) --- */
+  .orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(80px); opacity: 0.4; z-index: -1;
+    animation: float 20s infinite alternate ease-in-out;
+  }
+  .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #4f46e5; }
+  .orb-2 { bottom: -10%; right: -10%; width: 40vw; height: 40vw; background: #db2777; animation-delay: -5s; }
+  
+  @keyframes float { 
+    0% { transform: translate(0, 0) scale(1); } 
+    100% { transform: translate(30px, 50px) scale(1.1); } 
+  }
+
+  /* --- 3. THE 16:9 DASHBOARD (Glassmorphism) --- */
+  .dashboard {
+    width: 90vw; max-width: 1400px; aspect-ratio: 16/9;
+    background: rgba(10, 10, 20, 0.6);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    display: grid; grid-template-columns: 350px 1fr 300px;
+    overflow: hidden;
+    transition: transform 0.1s ease-out; /* Smooth parallax follow */
+    transform-style: preserve-3d;
+  }
+
+  /* --- 4. LEFT PANEL: CONTROLS --- */
+  .panel-left {
+    padding: 30px; border-right: 1px solid var(--glass-border);
+    display: flex; flex-direction: column; gap: 20px;
+    overflow-y: auto;
+  }
+
+  h1 { font-size: 28px; margin: 0; background: linear-gradient(90deg, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+  .subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4; }
+
+  /* Gene Cards (Replacing Select Boxes) */
+  .gene-group { margin-bottom: 24px; }
+  .gene-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
+  
+  .toggle-container { display: flex; gap: 8px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 12px; }
+  
+  .toggle-btn {
+    flex: 1; padding: 10px; border-radius: 8px; cursor: pointer;
+    text-align: center; font-size: 12px; font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text-muted); border: 1px solid transparent;
+  }
+  
+  .toggle-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  
+  /* Active State (Glow) */
+  .toggle-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff; box-shadow: 0 0 15px var(--iris-color);
+  }
+
+  /* --- 5. CENTER PANEL: THE EYE --- */
+  .panel-center {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    position: relative;
+  }
+
+  .eye-container {
+    width: 350px; height: 350px;
+    position: relative;
+    filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.3));
+    transition: filter 0.5s ease;
+  }
+  
+  /* SVG Eye Animation */
+  svg#eyeSVG { width: 100%; height: 100%; overflow: visible; }
+  
+  #iris { transition: fill 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  
+  /* Breathing Animation */
+  .eye-container { animation: breathe 6s ease-in-out infinite; }
+  @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+
+  .output-score {
+    margin-top: 30px; font-size: 14px; color: var(--text-muted);
+    background: rgba(0,0,0,0.3); padding: 8px 16px; border-radius: 20px;
+  }
+
+  /* --- 6. RIGHT PANEL: PROTEIN VISUALIZER --- */
+  .panel-right {
+    border-left: 1px solid var(--glass-border);
+    background: rgba(0,0,0,0.2);
+    padding: 30px;
+    display: flex; flex-direction: column;
+  }
+
+  .visualizer-title { font-size: 12px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 20px; text-align: right; }
+
+  /* The Grid of Particles */
+  .protein-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 10px; width: 100%; aspect-ratio: 1/1;
+  }
+
+  .atom {
+    background: var(--iris-color);
+    border-radius: 50%;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy transition */
+    opacity: 0.7;
+    box-shadow: 0 0 10px var(--iris-color);
+  }
+
+  .protein-info {
+    margin-top: auto; font-size: 14px; text-align: right; opacity: 0.8;
+  }
+  .protein-name { font-weight: 700; color: #fff; font-size: 18px; margin-bottom: 4px; }
+
+  /* --- RESPONSIVE --- */
+  @media (max-width: 1000px) {
+    .dashboard { grid-template-columns: 1fr; grid-template-rows: auto auto auto; height: auto; aspect-ratio: auto; overflow-y: scroll; }
+    .panel-left, .panel-right { border: none; }
+    body { height: auto; overflow-y: auto; padding: 20px; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="dashboard" id="tiltCard">
+    
+    <div class="panel-left">
+      <div>
+        <h1>Decode Your Eye Color!</h1>
+        <p class="subtitle">This portal helps you play with three genes associated with eye color. These are HERC2, SLC24A4 and OCA2. Each gene has more than one variant. The final colour of your eye is decided by what set of variants you are blessed with from your mother and your father.</p>
+		<p class="subtitle">Can you find the set of variants responsible for your eye colour?!</p>
+      </div>
+
+      <div class="gene-group">
+        <div class="gene-label">
+          <span>HERC2 (Master Switch)</span>
+          <span style="opacity:0.5">rs12913832</span>
+        </div>
+        <div class="toggle-container">
+          <div class="toggle-btn" onclick="setGene('s1', 0, this)">AA<br>Brown</div>
+          <div class="toggle-btn" onclick="setGene('s1', 0.5, this)">AG<br>Hazel</div>
+          <div class="toggle-btn active" onclick="setGene('s1', 1, this)">GG<br>Blue</div>
+        </div>
+      </div>
+
+      <div class="gene-group">
+        <div class="gene-label">
+          <span>SLC24A4 (Modifier 1)</span>
+          <span style="opacity:0.5">rs12896399</span>
+        </div>
+        <div class="toggle-container">
+          <div class="toggle-btn" onclick="setGene('s2', 0, this)">TT<br>Dark</div>
+          <div class="toggle-btn" onclick="setGene('s2', 0.5, this)">TG<br>Med</div>
+          <div class="toggle-btn active" onclick="setGene('s2', 1, this)">GG<br>Light</div>
+        </div>
+      </div>
+
+      <div class="gene-group">
+        <div class="gene-label">
+          <span>OCA2 (Modifier 2)</span>
+          <span style="opacity:0.5">rs1800407</span>
+        </div>
+        <div class="toggle-container">
+          <div class="toggle-btn" onclick="setGene('s3', 0, this)">CC<br>Dark</div>
+          <div class="toggle-btn" onclick="setGene('s3', 0.5, this)">CT<br>Med</div>
+          <div class="toggle-btn active" onclick="setGene('s3', 1, this)">TT<br>Light</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="panel-center">
+      <div class="eye-container">
+        <svg id="eyeSVG" viewBox="0 0 300 300">
+          <defs>
+            <radialGradient id="irisGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+              <stop offset="30%" id="gradInner" stop-color="#3b82f6"/>
+              <stop offset="95%" id="gradOuter" stop-color="#1d4ed8"/>
+            </radialGradient>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+
+          <path d="M15,150 Q150,-20 285,150 Q150,320 15,150" fill="#f0f4f8" fill-opacity="0.9"/>
+          
+          <g id="irisGroup" transform="translate(150,150)">
+            <circle r="72" fill="none" stroke="#000" stroke-opacity="0.2" stroke-width="2"/>
+            <circle id="iris" r="70" fill="url(#irisGradient)"></circle>
+            <circle r="25" fill="#0b0b15"></circle>
+            <ellipse cx="-20" cy="-20" rx="12" ry="8" fill="white" opacity="0.8"/>
+            <circle cx="25" cy="25" r="4" fill="white" opacity="0.4"/>
+          </g>
+        </svg>
+      </div>
+      <div class="output-score">Lightness Index: <span id="scoreVal">100</span>%</div>
+    </div>
+
+    <div class="panel-right">
+      <div class="visualizer-title">Protein Expression Visualization</div>
+      
+      <div class="protein-grid" id="proteinGrid">
+        </div>
+
+      <div class="protein-info">
+        <div class="protein-name" id="proteinState">P-Protein (Blue)</div>
+        <div>Melanosome Density</div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+/* LOGIC:
+  1. Parallax Tilt Effect
+  2. Gene Weight Calculation
+  3. Color Blending
+  4. Generative Protein Pattern
+*/
+
+// --- CONFIG ---
+const state = { s1: 1, s2: 1, s3: 1 }; // Default: Blue
+const weights = { s1: 0.65, s2: 0.22, s3: 0.13 };
+const colors = { brown: '#8b4513', hazel: '#10b981', blue: '#3b82f6' };
+
+// --- 1. PARALLAX EFFECT ---
+const card = document.getElementById('tiltCard');
+document.addEventListener('mousemove', (e) => {
+  const x = (window.innerWidth / 2 - e.pageX) / 50;
+  const y = (window.innerHeight / 2 - e.pageY) / 50;
+  // Apply rotation to the card
+  card.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
+});
+
+// --- 2. GENE LOGIC ---
+function setGene(gene, val, btn) {
+  state[gene] = val;
+  
+  // Update Buttons UI
+  const siblings = btn.parentElement.children;
+  for(let i=0; i<siblings.length; i++) siblings[i].classList.remove('active');
+  btn.classList.add('active');
+
+  calculate();
+}
+
+// --- 3. CALCULATION & COLOR BLENDING ---
+function hexToRgb(hex){
+  const h = hex.replace('#','');
+  return { r: parseInt(h.slice(0,2),16), g: parseInt(h.slice(2,4),16), b: parseInt(h.slice(4,6),16) };
+}
+function rgbToHex(r,g,b){
+  const toHex = v => ('0'+Math.round(Math.max(0,Math.min(255,v))).toString(16)).slice(-2);
+  return '#' + toHex(r) + toHex(g) + toHex(b);
+}
+function lerp(a,b,t){ return a + (b-a) * t; }
+
+function blendColor(t){
+  // Brown (0) -> Hazel (0.45) -> Blue (1.0)
+  t = Math.max(0, Math.min(1, t));
+  const { brown, hazel, blue } = colors;
+  if(t <= 0.45){
+    const r1 = hexToRgb(brown), r2 = hexToRgb(hazel), f = t / 0.45;
+    return rgbToHex( lerp(r1.r, r2.r, f), lerp(r1.g, r2.g, f), lerp(r1.b, r2.b, f) );
+  } else {
+    const r1 = hexToRgb(hazel), r2 = hexToRgb(blue), f = (t - 0.45) / (1 - 0.45);
+    return rgbToHex( lerp(r1.r, r2.r, f), lerp(r1.g, r2.g, f), lerp(r1.b, r2.b, f) );
+  }
+}
+
+function calculate() {
+  // Weighted Average
+  const num = state.s1*weights.s1 + state.s2*weights.s2 + state.s3*weights.s3;
+  const den = weights.s1 + weights.s2 + weights.s3;
+  const weighted = num / den; // 0 to 1
+
+  // Update Score
+  document.getElementById('scoreVal').textContent = Math.round(weighted * 100);
+
+  // Get Color
+  const finalColor = blendColor(weighted);
+  
+  // Update CSS Variable (Controls Glows & Shadows)
+  document.documentElement.style.setProperty('--iris-color', finalColor);
+
+  // Update Eye Gradient
+  document.getElementById('gradInner').setAttribute('stop-color', finalColor);
+  document.getElementById('gradOuter').setAttribute('stop-color', finalColor);
+
+  // Trigger Protein Animation
+  updateProteinGrid(weighted, finalColor);
+}
+
+// --- 4. GENERATIVE PROTEIN ART ---
+const grid = document.getElementById('proteinGrid');
+// Create initial atoms
+for(let i=0; i<25; i++) {
+  const d = document.createElement('div');
+  d.className = 'atom';
+  grid.appendChild(d);
+}
+
+function updateProteinGrid(score, color) {
+  const atoms = document.querySelectorAll('.atom');
+  const label = document.getElementById('proteinState');
+
+  // Change Label
+  if(score > 0.8) label.textContent = "Structure: Open (Blue)";
+  else if(score > 0.4) label.textContent = "Structure: Mixed (Hazel)";
+  else label.textContent = "Structure: Dense (Brown)";
+
+  // Animate Atoms
+  atoms.forEach((atom, i) => {
+    // Brown (Low Score) = Dense, Clustered, Organized, Darker
+    // Blue (High Score) = Spread out, Chaotic, Lighter
+    
+    // Scale: Brown is big/clumped (1.2), Blue is small/sparse (0.6)
+    const scale = score > 0.5 ? (0.5 + Math.random()*0.4) : (1.0 + Math.random()*0.3);
+    
+    // Radius: Brown = square-ish, Blue = round
+    const radius = score > 0.5 ? '50%' : '20%';
+    
+    // Transform
+    atom.style.transform = `scale(${scale})`;
+    atom.style.borderRadius = radius;
+    atom.style.backgroundColor = color;
+    atom.style.opacity = score > 0.5 ? 0.6 : 1; // Dense pigment is opaque
+  });
+}
+
+// Init
+calculate();
+
+</script>
+</body>
+</html>
