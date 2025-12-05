@@ -3,615 +3,289 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Eye Color Interactive — Multi-SNP Demo</title>
-
-<!-- IGV.js from CDN (internet required for full features) -->
-<script src="https://cdn.jsdelivr.net/npm/igv/dist/igv.min.js" defer></script>
+<title>BioDesign: Eye Color</title>
 
 <style>
+  /* --- 1. SETTING THE STAGE (Variables & Reset) --- */
   :root {
-    --bg: #0a1429;
-    --panel: #071022;
-    --accent: #ffd166;
-    --accent-hover: #ffbd59;
-    --text-primary: #e6eef8;
-    --text-secondary: #9fb4d6;
-    --text-muted: #6b85b3;
-    --border: rgba(255,255,255,0.08);
-    --success: #16a34a;
-    --warning: #f59e0b;
-    --error: #ef4444;
+    --bg-dark: #050510;
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --accent-glow: #00f2ff;
+    --text-main: #ffffff;
+    --text-muted: #8b9bb4;
     
-    /* Eye colors */
-    --brown: #8b4513;
-    --hazel: #10b981;
-    --blue: #3b82f6;
-    --green: #22c55e;
+    /* Dynamic Colors (Updated by JS) */
+    --iris-color: #3b82f6; 
   }
 
-  /* Global Styles */
-  * {
-    box-sizing: border-box;
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0; height: 100vh; width: 100vw; overflow: hidden;
+    background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #000000 100%);
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--text-main);
+    display: flex; justify-content: center; align-items: center;
+    perspective: 1500px; /* Essential for Parallax */
   }
 
-  html, body {
-    height: 100%;
-    margin: 0;
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    color: var(--text-primary);
-    background: var(--bg);
-    line-height: 1.6;
+  /* --- 2. BACKGROUND AMBIENCE (Fluid Orbs) --- */
+  .orb {
+    position: absolute; border-radius: 50%;
+    filter: blur(80px); opacity: 0.4; z-index: -1;
+    animation: float 20s infinite alternate ease-in-out;
+  }
+  .orb-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #4f46e5; }
+  .orb-2 { bottom: -10%; right: -10%; width: 40vw; height: 40vw; background: #db2777; animation-delay: -5s; }
+  
+  @keyframes float { 
+    0% { transform: translate(0, 0) scale(1); } 
+    100% { transform: translate(30px, 50px) scale(1.1); } 
   }
 
-  .wrap {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+  /* --- 3. THE 16:9 DASHBOARD (Glassmorphism) --- */
+  .dashboard {
+    width: 90vw; max-width: 1400px; aspect-ratio: 16/9;
+    background: rgba(10, 10, 20, 0.6);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    display: grid; grid-template-columns: 350px 1fr 300px;
+    overflow: hidden;
+    transition: transform 0.1s ease-out; /* Smooth parallax follow */
+    transform-style: preserve-3d;
   }
 
-  /* Header & Branding */
-  header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--border);
+  /* --- 4. LEFT PANEL: CONTROLS --- */
+  .panel-left {
+    padding: 30px; border-right: 1px solid var(--glass-border);
+    display: flex; flex-direction: column; gap: 20px;
+    overflow-y: auto;
   }
 
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex: 1;
+  h1 { font-size: 28px; margin: 0; background: linear-gradient(90deg, #fff, #a5b4fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.5px; }
+  .subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.4; }
+
+  /* Gene Cards (Replacing Select Boxes) */
+  .gene-group { margin-bottom: 24px; }
+  .gene-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
+  
+  .toggle-container { display: flex; gap: 8px; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 12px; }
+  
+  .toggle-btn {
+    flex: 1; padding: 10px; border-radius: 8px; cursor: pointer;
+    text-align: center; font-size: 12px; font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text-muted); border: 1px solid transparent;
+  }
+  
+  .toggle-btn:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  
+  /* Active State (Glow) */
+  .toggle-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #fff; box-shadow: 0 0 15px var(--iris-color);
   }
 
-  .brand svg {
-    flex-shrink: 0;
+  /* --- 5. CENTER PANEL: THE EYE --- */
+  .panel-center {
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    position: relative;
   }
 
-  .title {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--accent);
-    margin: 0;
-    line-height: 1.2;
+  .eye-container {
+    width: 350px; height: 350px;
+    position: relative;
+    filter: drop-shadow(0 0 30px rgba(59, 130, 246, 0.3));
+    transition: filter 0.5s ease;
+  }
+  
+  /* SVG Eye Animation */
+  svg#eyeSVG { width: 100%; height: 100%; overflow: visible; }
+  
+  #iris { transition: fill 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  
+  /* Breathing Animation */
+  .eye-container { animation: breathe 6s ease-in-out infinite; }
+  @keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+
+  .output-score {
+    margin-top: 30px; font-size: 14px; color: var(--text-muted);
+    background: rgba(0,0,0,0.3); padding: 8px 16px; border-radius: 20px;
   }
 
-  .subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
-    margin: 4px 0 0 0;
-    max-width: 520px;
+  /* --- 6. RIGHT PANEL: PROTEIN VISUALIZER --- */
+  .panel-right {
+    border-left: 1px solid var(--glass-border);
+    background: rgba(0,0,0,0.2);
+    padding: 30px;
+    display: flex; flex-direction: column;
   }
 
-  /* Status Indicator */
-  .status-ind {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    background: rgba(255,255,255,0.05);
-    padding: 6px 12px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
+  .visualizer-title { font-size: 12px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 20px; text-align: right; }
+
+  /* The Grid of Particles */
+  .protein-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 10px; width: 100%; aspect-ratio: 1/1;
   }
 
-  .status-dot {
-    width: 8px;
-    height: 8px;
+  .atom {
+    background: var(--iris-color);
     border-radius: 50%;
-    display: inline-block;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy transition */
+    opacity: 0.7;
+    box-shadow: 0 0 10px var(--iris-color);
   }
 
-  .status-ok { background: var(--success); }
-  .status-warn { background: var(--warning); }
-  .status-err { background: var(--error); }
-
-  /* Main Layout */
-  .main {
-    display: flex;
-    flex-direction: column; /* Change from row to column */
-    gap: 24px;
-    align-items: center; /* Center the content */
-    flex: 1;
+  .protein-info {
+    margin-top: auto; font-size: 14px; text-align: right; opacity: 0.8;
   }
+  .protein-name { font-weight: 700; color: #fff; font-size: 18px; margin-bottom: 4px; }
 
-  /* Left Panel */
-  .left {
-    width: 100%;
-    max-width: 600px; /* Set a max width but keep it centered */
-    background: linear-gradient(180deg, var(--panel), #040f1a);
-    padding: 24px;
-    border-radius: 16px;
-    border: 1px solid var(--border);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    /* Remove the flex: 0 0 480px; */
-  }
-
-  /* Eye Stage */
-  .eye-stage {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-
-  .eye-description {
-    margin: 0;
-    color: #ffd166;
-    font-size: 15px;
-    text-align: center;
-    line-height: 1.5;
-    font-weight: normal;
-  }
-
-  svg#eyeSVG {
-    max-width: 100%;
-    height: auto;
-    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4));
-  }
-
-  /* SNP Controls */
-  .snp-row {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .snp-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(255,255,255,0.05);
-    padding: 16px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    transition: all 0.2s ease;
-  }
-
-  .snp-card:hover {
-    background: rgba(255,255,255,0.08);
-    border-color: rgba(255,255,255,0.12);
-  }
-
-  .snp-name {
-    font-weight: 600;
-    color: var(--text-primary);
-    font-size: 14px;
-  }
-
-  .snp-gene {
-    display: block;
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
-
-  select.snp-select {
-    background: rgba(2, 32, 42, 0.8);
-    color: var(--text-primary);
-    border: 1px solid rgba(255,255,255,0.15);
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 13px;
-    min-width: 180px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  select.snp-select:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.2);
-  }
-
-  /* Controls Bottom */
-  .controls-bottom {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-  }
-
-  .btn {
-    background: linear-gradient(135deg, var(--accent), #ffbd59);
-    border: none;
-    color: #071022;
-    padding: 10px 20px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(255, 209, 102, 0.3);
-  }
-
-  .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(255, 209, 102, 0.4);
-  }
-
-  .btn.secondary {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    box-shadow: none;
-  }
-
-  .btn.secondary:hover {
-    background: rgba(255,255,255,0.12);
-    color: var(--text-primary);
-  }
-
-  .score-container {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    color: var(--text-secondary);
-  }
-
-  .score {
-    font-weight: 700;
-    color: var(--accent);
-    font-size: 18px;
-  }
-
-  /* Tip Text */
-  .tip-text {
-    margin-top: 16px;
-    color: var(--text-muted);
-    font-size: 13px;
-    line-height: 1.5;
-    text-align: center;
-    padding: 12px;
-    background: rgba(255,255,255,0.03);
-    border-radius: 8px;
-    border-left: 3px solid var(--accent);
-  }
-
-  /* Advanced Area */
-  .advanced {
-    margin-top: 24px;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 10px 40px rgba(2,6,23,0.6);
-    border: 1px solid var(--border);
-  }
-
-  .advanced .panel {
-    background: var(--panel);
-    padding: 20px;
-  }
-
-  .advanced-header {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
-
-  .advanced-title {
-    margin: 0;
-    color: var(--text-primary);
-    font-size: 18px;
-  }
-
-  .advanced-subtitle {
-    margin: 4px 0 0 0;
-    color: var(--text-secondary);
-    font-size: 13px;
-  }
-
-  .internet-notice {
-    font-size: 12px;
-    color: var(--text-muted);
-    background: rgba(255,255,255,0.05);
-    padding: 6px 10px;
-    border-radius: 6px;
-    white-space: nowrap;
-  }
-
-  /* IGV Container */
-  #igv-container {
-    height: 400px;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    background: #ffffff;
-    margin-bottom: 16px;
-  }
-
-  /* ensure IGV elements readable */
-  #igv-container .igv-track,
-  #igv-container .igv-track-label,
-  #igv-container .igv-feature {
-    background: #fff;
-    color: #000;
-  }
-
-  /* Gene SVG */
-  .gene-svg {
-    width: 100%;
-    height: 100px;
-    background: var(--panel);
-    border-radius: 12px;
-    padding: 12px;
-    border: 1px solid var(--border);
-    margin-bottom: 16px;
-  }
-
-  /* Sequence Box */
-  .sequence-section {
-    margin-top: 20px;
-  }
-
-  .sequence-title {
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-    font-size: 14px;
-  }
-
-  .sequence-box {
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
-    background: rgba(255,255,255,0.03);
-    padding: 16px;
-    border-radius: 12px;
-    color: var(--text-primary);
-    overflow-x: auto;
-    font-size: 14px;
-    line-height: 1.4;
-    border: 1px solid var(--border);
-    white-space: nowrap;
-  }
-
-  /* Mutation Highlight */
-  .mut-highlight {
-    background: linear-gradient(90deg, #ffbd59, #ff5c7a);
-    padding: 2px 4px;
-    border-radius: 4px;
-    color: #071022;
-    font-weight: 700;
-    transition: all 0.3s ease;
-  }
-
-  /* Footer */
-  footer {
-    margin-top: 32px;
-    color: var(--text-muted);
-    font-size: 13px;
-    text-align: center;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
-  }
-
-  /* Responsive Improvements */
-  @media (max-width: 768px) {
-    .wrap {
-      padding: 16px;
-    }
-    
-    header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 12px;
-    }
-    
-    .status-ind {
-      align-self: flex-start;
-    }
-    
-    .left {
-      padding: 20px;
-    }
-    
-    .snp-card {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 12px;
-    }
-    
-    select.snp-select {
-      min-width: 100%;
-    }
-    
-    .controls-bottom {
-      flex-wrap: wrap;
-    }
-    
-    .advanced-header {
-      flex-direction: column;
-      gap: 8px;
-    }
-    
-    .internet-notice {
-      align-self: flex-start;
-    }
-  }
-
-  /* Center section - make it full width below the controls */
-  .center {
-    width: 100%;
-  }
-
-  /* Animation for eye color transition */
-  #iris {
-    transition: fill 850ms cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  /* Loading animation */
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-  }
-
-  .loading {
-    animation: pulse 1.5s ease-in-out infinite;
+  /* --- RESPONSIVE --- */
+  @media (max-width: 1000px) {
+    .dashboard { grid-template-columns: 1fr; grid-template-rows: auto auto auto; height: auto; aspect-ratio: auto; overflow-y: scroll; }
+    .panel-left, .panel-right { border: none; }
+    body { height: auto; overflow-y: auto; padding: 20px; }
   }
 </style>
 </head>
 <body>
-<div class="wrap" role="main" aria-labelledby="pageTitle">
-  <header>
-    <div class="brand">
-      <svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="12" r="10" fill="#ffd166"/>
-        <path d="M12 7c3 0 5 3 5 5s-2 5-5 5-5-3-5-5 2-5 5-5z" fill="#071022"/>
-      </svg>
+
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="dashboard" id="tiltCard">
+    
+    <div class="panel-left">
       <div>
-        <h1 id="pageTitle" class="title">Decode Your Eye Color! 👁️</h1>
-        <p class="subtitle">Try genotypes and watch the eye change. Advanced genomic view available below.</p>
+        <h1>Decode Your Eye Color!</h1>
+        <p class="subtitle">This portal helps you play with three genes associated with eye color. These are HERC2, SLC24A4 and OCA2. Each gene has more than one variant. The final colour of your eye is decided by what set of variants you are blessed with from your mother and your father.</p>
+		<p class="subtitle">Can you find the set of variants responsible for your eye colour?!</p>
       </div>
+
+      <div class="gene-group">
+        <div class="gene-label">
+          <span>HERC2 (Master Switch)</span>
+          <span style="opacity:0.5">rs12913832</span>
+        </div>
+        <div class="toggle-container">
+          <div class="toggle-btn" onclick="setGene('s1', 0, this)">AA<br>Brown</div>
+          <div class="toggle-btn" onclick="setGene('s1', 0.5, this)">AG<br>Hazel</div>
+          <div class="toggle-btn active" onclick="setGene('s1', 1, this)">GG<br>Blue</div>
+        </div>
+      </div>
+
+      <div class="gene-group">
+        <div class="gene-label">
+          <span>SLC24A4 (Modifier 1)</span>
+          <span style="opacity:0.5">rs12896399</span>
+        </div>
+        <div class="toggle-container">
+          <div class="toggle-btn" onclick="setGene('s2', 0, this)">TT<br>Dark</div>
+          <div class="toggle-btn" onclick="setGene('s2', 0.5, this)">TG<br>Med</div>
+          <div class="toggle-btn active" onclick="setGene('s2', 1, this)">GG<br>Light</div>
+        </div>
+      </div>
+
+      <div class="gene-group">
+        <div class="gene-label">
+          <span>OCA2 (Modifier 2)</span>
+          <span style="opacity:0.5">rs1800407</span>
+        </div>
+        <div class="toggle-container">
+          <div class="toggle-btn" onclick="setGene('s3', 0, this)">CC<br>Dark</div>
+          <div class="toggle-btn" onclick="setGene('s3', 0.5, this)">CT<br>Med</div>
+          <div class="toggle-btn active" onclick="setGene('s3', 1, this)">TT<br>Light</div>
+        </div>
+      </div>
+
     </div>
 
-    <div class="status-ind" id="statusIndicator" title="Component status (IGV & sequence)">
-      <span id="statusDot" class="status-dot status-warn" aria-hidden="true"></span>
-      <span id="statusText">Initializing...</span>
-    </div>
-  </header>
+    <div class="panel-center">
+      <div class="eye-container">
+        <svg id="eyeSVG" viewBox="0 0 300 300">
+          <defs>
+            <radialGradient id="irisGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+              <stop offset="30%" id="gradInner" stop-color="#3b82f6"/>
+              <stop offset="95%" id="gradOuter" stop-color="#1d4ed8"/>
+            </radialGradient>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="10" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
 
-  <div class="main">
-    <!-- LEFT: Eye + controls -->
-    <section class="left" aria-label="Interactive eye controls">
-      <div class="eye-stage" role="region" aria-labelledby="eyeDescription">
-        <p id="eyeDescription" class="eye-description">
-          This portal helps you play with three genes associated with eye color. These are HERC2, SLC24A4 and OCA2. Each gene has more than one variant. The final colour of your eye is decided by what set of variants you are blessed with from your mother and your father.<br><br>
-          HERC2 has three variants which are responsible for eye colour. SLC24A4 and OCA2 contribute to the shade of those colours.<br><br>
-          Choose a set of variant for each of the three genes (you can do that randomly) and see the colour in the eye below change accordingly.<br><br>
-          Can you find the set of variants responsible for your eye colour?!
-        </p>
-
-        <!-- Eye svg (center stage) -->
-        <svg id="eyeSVG" viewBox="0 0 280 220" role="img" aria-label="Illustration of an eye">
-          <ellipse cx="140" cy="110" rx="120" ry="70" fill="#ffffff" stroke="#e6eef8" stroke-opacity="0.06"/>
-          <g id="irisGroup" transform="translate(140,110)">
-            <circle id="iris" r="46" fill="#3b82f6" stroke="#0b1220" stroke-width="2"></circle>
-            <circle id="limbus" r="62" fill="none" stroke="#0b1220" stroke-opacity="0.06"></circle>
-            <circle id="pupil" r="20" fill="#071022"></circle>
-            <ellipse cx="-10" cy="-12" rx="8" ry="5" fill="rgba(255,255,255,0.9)"/>
+          <path d="M15,150 Q150,-20 285,150 Q150,320 15,150" fill="#f0f4f8" fill-opacity="0.9"/>
+          
+          <g id="irisGroup" transform="translate(150,150)">
+            <circle r="72" fill="none" stroke="#000" stroke-opacity="0.2" stroke-width="2"/>
+            <circle id="iris" r="70" fill="url(#irisGradient)"></circle>
+            <circle r="25" fill="#0b0b15"></circle>
+            <ellipse cx="-20" cy="-20" rx="12" ry="8" fill="white" opacity="0.8"/>
+            <circle cx="25" cy="25" r="4" fill="white" opacity="0.4"/>
           </g>
         </svg>
-
-        <!-- SNP controls -->
-        <div style="width:100%;margin-top:6px">
-          <div class="snp-row" role="form" aria-label="SNP genotype selectors">
-            <div class="snp-card">
-              <div>
-                <div class="snp-name">HERC2 Gene<span class="snp-gene">(rs12913832)</span></div>
-              </div>
-              <select id="snp1" class="snp-select" aria-label="rs12913832 genotype">
-                <option value="0">AA — Brown eyes likely</option>
-                <option value="0.5">AG — Green/Hazel eyes likely</option>
-                <option value="1" selected>GG — Blue eyes likely</option>
-              </select>
-            </div>
-
-            <div class="snp-card">
-              <div>
-                <div class="snp-name">SLC24A4 Gene<span class="snp-gene">(rs12896399)</span></div>
-              </div>
-              <select id="snp2" class="snp-select" aria-label="rs12896399 genotype">
-                <option value="0">TT — No lightening effect</option>
-                <option value="0.5">TG —Some lightening effect</option>
-                <option value="1">GG —Strong lightening effect</option>
-              </select>
-            </div>
-
-            <div class="snp-card">
-              <div>
-                <div class="snp-name">OCA2 Gene<span class="snp-gene">(rs1800407)</span></div>
-              </div>
-              <select id="snp3" class="snp-select" aria-label="rs1800407 genotype">
-                <option value="0">CC — No lightening effect</option>
-                <option value="0.5">CT — Some lightening effect</option>
-                <option value="1">TT — Strong lightening effect</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="controls-bottom">
-            <button id="applyBtn" class="btn" aria-label="Apply genotype choices">Apply</button>
-            <button id="advancedToggle" class="btn secondary" aria-expanded="false">Advanced view ▾</button>
-            <div class="score-container">
-              Combined score: <span id="combinedScore" class="score">—</span>
-            </div>
-          </div>
-
-          <p class="tip-text">
-            Tip: Start with rs12913832 then adjust modifiers. This is a simplified educational demo — real genetics is more complex. Want more details? Check out this paper " PMCID: PMC7946369 "
-          </p>
-        </div>
       </div>
-    </section>
+      <div class="output-score">Lightness Index: <span id="scoreVal">100</span>%</div>
+    </div>
 
-    <!-- RIGHT/CENTER: Advanced area (collapsible) -->
-    <section class="center" aria-label="Advanced genomic view">
-      <div id="advancedArea" class="advanced" hidden>
-        <div class="panel">
-          <div class="advanced-header">
-            <div>
-              <h3 class="advanced-title">Advanced Genomic View</h3>
-              <p class="advanced-subtitle">Genome viewer (hg38) focused on OCA2/HERC2; annotation for rs12913832 is highlighted.</p>
-            </div>
-            <div class="internet-notice">Internet required for live tracks</div>
-          </div>
-
-          <div id="igv-container" aria-label="Genome browser"></div>
-
-          <div class="gene-svg" id="geneSvgWrap" aria-hidden="false"></div>
-
-          <div class="sequence-section">
-            <div class="sequence-title">Sequence around rs12913832</div>
-            <pre id="sequenceBox" class="sequence-box" aria-live="polite">Loading sequence…</pre>
-          </div>
+    <div class="panel-right">
+      <div class="visualizer-title">Protein Expression Visualization</div>
+      
+      <div class="protein-grid" id="proteinGrid">
         </div>
+
+      <div class="protein-info">
+        <div class="protein-name" id="proteinState">P-Protein (Blue)</div>
+        <div>Melanosome Density</div>
       </div>
-    </section>
+    </div>
+
   </div>
 
-  <footer>
-    Educational Demo Prepared for the occasion of Lahore Science Mela by Arsalan Riaz @ Precision Medicine Lab.
-  </footer>
-</div>
-
 <script>
-/* Production-ready JS: modular, commented, minimal globals.
-   - Eye center stage with smooth animated color changes
-   - Multi-SNP weighted blending
-   - Advanced view toggles IGV + gene diagram + sequence (internet required)
+/* LOGIC:
+  1. Parallax Tilt Effect
+  2. Gene Weight Calculation
+  3. Color Blending
+  4. Generative Protein Pattern
 */
 
-/* ---------- Config & constants ---------- */
-const CONFIG = {
-  variant: { chr: 'chr15', pos: 28120472 }, // rs12913832 hg38 (1-based)
-  flank: 12, // sequence flank
-  weights: { s1: 0.65, s2: 0.22, s3: 0.13 }, // contribution weights
-  colors: { brown: '#8b4513', hazel: '#10b981', blue: '#3b82f6' },
-  igvTracks: [
-    { name: "RefSeq Genes", sourceType: "ucsc", track: "refGene", displayMode: "EXPANDED" },
-    { name: "dbSNP (snp151)", sourceType: "ucsc", track: "snp151", displayMode: "COLLAPSED" },
-    { name: "ClinVar", sourceType: "ucsc", track: "clinvarMain", displayMode: "COLLAPSED" }
-  ]
-};
+// --- CONFIG ---
+const state = { s1: 1, s2: 1, s3: 1 }; // Default: Blue
+const weights = { s1: 0.65, s2: 0.22, s3: 0.13 };
+const colors = { brown: '#8b4513', hazel: '#10b981', blue: '#3b82f6' };
 
-/* ---------- Small UI helpers ---------- */
-function $(id){ return document.getElementById(id); }
-function setStatusOK(text){ $('statusDot').className = 'status-dot status-ok'; $('statusText').textContent = text || 'Online'; }
-function setStatusWarn(text){ $('statusDot').className = 'status-dot status-warn'; $('statusText').textContent = text || 'Partial'; }
-function setStatusErr(text){ $('statusDot').className = 'status-dot status-err'; $('statusText').textContent = text || 'Offline'; }
+// --- 1. PARALLAX EFFECT ---
+const card = document.getElementById('tiltCard');
+document.addEventListener('mousemove', (e) => {
+  const x = (window.innerWidth / 2 - e.pageX) / 50;
+  const y = (window.innerHeight / 2 - e.pageY) / 50;
+  // Apply rotation to the card
+  card.style.transform = `rotateY(${x}deg) rotateX(${y}deg)`;
+});
 
-/* ---------- Color blending helpers ---------- */
+// --- 2. GENE LOGIC ---
+function setGene(gene, val, btn) {
+  state[gene] = val;
+  
+  // Update Buttons UI
+  const siblings = btn.parentElement.children;
+  for(let i=0; i<siblings.length; i++) siblings[i].classList.remove('active');
+  btn.classList.add('active');
+
+  calculate();
+}
+
+// --- 3. CALCULATION & COLOR BLENDING ---
 function hexToRgb(hex){
   const h = hex.replace('#','');
   return { r: parseInt(h.slice(0,2),16), g: parseInt(h.slice(2,4),16), b: parseInt(h.slice(4,6),16) };
@@ -622,10 +296,10 @@ function rgbToHex(r,g,b){
 }
 function lerp(a,b,t){ return a + (b-a) * t; }
 
-/* Blend path: brown -> hazel -> blue (two segments) */
 function blendColor(t){
+  // Brown (0) -> Hazel (0.45) -> Blue (1.0)
   t = Math.max(0, Math.min(1, t));
-  const { brown, hazel, blue } = CONFIG.colors;
+  const { brown, hazel, blue } = colors;
   if(t <= 0.45){
     const r1 = hexToRgb(brown), r2 = hexToRgb(hazel), f = t / 0.45;
     return rgbToHex( lerp(r1.r, r2.r, f), lerp(r1.g, r2.g, f), lerp(r1.b, r2.b, f) );
@@ -635,243 +309,69 @@ function blendColor(t){
   }
 }
 
-/* ---------- Sequence fetching ---------- */
-async function fetchSequenceUCSC(chr, start0, endInclusive, timeoutMs=8000){
-  const url = `https://api.genome.ucsc.edu/getData/sequence?genome=hg38;chrom=${chr};start=${start0};end=${endInclusive}`;
-  const controller = new AbortController();
-  const id = setTimeout(()=>controller.abort(), timeoutMs);
-  try {
-    const r = await fetch(url, { signal: controller.signal });
-    clearTimeout(id);
-    if(!r.ok) throw new Error('Bad response ' + r.status);
-    const j = await r.json();
-    return (j && j.dna) ? j.dna.toUpperCase().replace(/\s+/g,'') : null;
-  } catch(e){
-    clearTimeout(id);
-    console.info('UCSC sequence fetch failed:', e && e.message ? e.message : e);
-    return null;
-  }
+function calculate() {
+  // Weighted Average
+  const num = state.s1*weights.s1 + state.s2*weights.s2 + state.s3*weights.s3;
+  const den = weights.s1 + weights.s2 + weights.s3;
+  const weighted = num / den; // 0 to 1
+
+  // Update Score
+  document.getElementById('scoreVal').textContent = Math.round(weighted * 100);
+
+  // Get Color
+  const finalColor = blendColor(weighted);
+  
+  // Update CSS Variable (Controls Glows & Shadows)
+  document.documentElement.style.setProperty('--iris-color', finalColor);
+
+  // Update Eye Gradient
+  document.getElementById('gradInner').setAttribute('stop-color', finalColor);
+  document.getElementById('gradOuter').setAttribute('stop-color', finalColor);
+
+  // Trigger Protein Animation
+  updateProteinGrid(weighted, finalColor);
 }
 
-/* ---------- Gene diagram (simplified) ---------- */
-function drawGeneDiagram(containerId, color='#ff5c7a'){
-  const cont = $(containerId);
-  if(!cont) return;
-  cont.innerHTML = '';
-  // simple illustrative coordinates
-  const data = {
-    start: 28119000, end: 28122000, exons: [
-      {start:28119120,end:28119320},{start:28119800,end:28119960},{start:28120500,end:28120680},
-      {start:28121020,end:28121140},{start:28121600,end:28121720}
-    ],
-    variantPos: CONFIG.variant.pos
-  };
-  const w = Math.max(320, cont.clientWidth - 16);
-  const h = 80;
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(svgNS,'svg');
-  svg.setAttribute('width','100%');
-  svg.setAttribute('height',h);
-  const scale = x => 12 + ((x - data.start) / (data.end - data.start)) * (w - 24);
-  const y = 40;
-  // baseline
-  const baseline = document.createElementNS(svgNS,'line');
-  baseline.setAttribute('x1', scale(data.start));
-  baseline.setAttribute('x2', scale(data.end));
-  baseline.setAttribute('y1', y);
-  baseline.setAttribute('y2', y);
-  baseline.setAttribute('stroke', '#9fb4d6');
-  baseline.setAttribute('stroke-width', '5');
-  svg.appendChild(baseline);
-  // exons
-  data.exons.forEach((ex,i) => {
-    const rx = scale(ex.start), ry = scale(ex.end), width = Math.max(6, ry - rx);
-    const rect = document.createElementNS(svgNS,'rect');
-    rect.setAttribute('x', rx);
-    rect.setAttribute('y', y - 14);
-    rect.setAttribute('width', width);
-    rect.setAttribute('height', 28);
-    rect.setAttribute('fill', '#3b82f6');
-    rect.setAttribute('rx', 4);
-    svg.appendChild(rect);
-  });
-  // variant marker
-  const vx = scale(data.variantPos);
-  const vline = document.createElementNS(svgNS,'line');
-  vline.setAttribute('x1', vx); vline.setAttribute('x2', vx);
-  vline.setAttribute('y1', y - 22); vline.setAttribute('y2', y + 22);
-  vline.setAttribute('stroke', color);
-  vline.setAttribute('stroke-width', '2');
-  svg.appendChild(vline);
-  const vtxt = document.createElementNS(svgNS,'text');
-  vtxt.setAttribute('x', vx + 6); vtxt.setAttribute('y', y - 26);
-  vtxt.setAttribute('font-size', '12'); vtxt.setAttribute('fill', '#ffd166');
-  vtxt.textContent = 'rs12913832';
-  svg.appendChild(vtxt);
-  cont.appendChild(svg);
+// --- 4. GENERATIVE PROTEIN ART ---
+const grid = document.getElementById('proteinGrid');
+// Create initial atoms
+for(let i=0; i<25; i++) {
+  const d = document.createElement('div');
+  d.className = 'atom';
+  grid.appendChild(d);
 }
 
-/* ---------- IGV helper (advanced view) ---------- */
-let igvBrowser = null;
-let igvAnnotationTrack = null;
-async function initIGV(containerId){
-  const container = $(containerId);
-  if(!container) return false;
-  try {
-    igvBrowser = await igv.createBrowser(container, { genome: 'hg38', locus: 'OCA2', tracks: CONFIG.igvTracks });
-    // small styling pass
-    setTimeout(() => {
-      container.style.background = '#ffffff';
-      try {
-        container.querySelectorAll('.igv-track, .igv-track-label, .igv-feature').forEach(el=>{
-          el.style.background = '#fff'; el.style.color = '#000';
-        });
-      } catch(e){}
-    }, 600);
-    return true;
-  } catch(e){
-    console.warn('IGV init error:', e);
-    return false;
-  }
-}
-async function addSnpAnnotation(color='#3b82f6'){
-  if(!igvBrowser) return;
-  const chr = CONFIG.variant.chr, pos = CONFIG.variant.pos;
-  try {
-    const feat = { chr, start: pos - 1, end: pos, name: 'rs12913832', score: 1000, strand: '+' };
-    igvAnnotationTrack = await igvBrowser.loadTrack({ name: 'rs12913832', type: 'annotation', format: 'bed', features: [feat], color });
-  } catch(e){
-    console.warn('Add annotation error:', e);
-  }
-}
-async function removeSnpAnnotation(){
-  if(!igvBrowser || !igvAnnotationTrack) return;
-  try { await igvBrowser.removeTrack(igvAnnotationTrack); igvAnnotationTrack = null; } catch(e){ console.warn('Remove annotation error:', e); }
-}
+function updateProteinGrid(score, color) {
+  const atoms = document.querySelectorAll('.atom');
+  const label = document.getElementById('proteinState');
 
-/* ---------- Main UI logic ---------- */
-function getSelectVal(id){
-  const el = $(id);
-  return el ? parseFloat(el.value) : 0;
-}
-async function recomputeAndApply(){
-  try {
-    const v1 = getSelectVal('snp1'), v2 = getSelectVal('snp2'), v3 = getSelectVal('snp3');
-    const numerator = v1*CONFIG.weights.s1 + v2*CONFIG.weights.s2 + v3*CONFIG.weights.s3;
-    const denom = CONFIG.weights.s1 + CONFIG.weights.s2 + CONFIG.weights.s3;
-    const weighted = denom > 0 ? (numerator / denom) : 0;
-    const score = Math.round(weighted * 100);
-    $('combinedScore').textContent = `${score} / 100`;
-    const color = blendColor(weighted);
-    $('iris').setAttribute('fill', color);
-    // highlight variant base (if sequence rendered)
-    const vb = document.querySelector('#sequenceBox .mut-highlight');
-    if(vb) vb.style.boxShadow = `0 0 0 3px ${color} inset`;
-    // redraw gene marker & IGV annotation color
-    drawGeneDiagram('geneSvgWrap', color);
-    const annColor = v1 >= 0.75 ? CONFIG.colors.blue : (v1 <= 0.25 ? CONFIG.colors.brown : CONFIG.colors.hazel);
-    await removeSnpAnnotation();
-    if(igvBrowser) await addSnpAnnotation(annColor);
-  } catch(e){
-    console.error('recompute error:', e);
-  }
-}
+  // Change Label
+  if(score > 0.8) label.textContent = "Structure: Open (Blue)";
+  else if(score > 0.4) label.textContent = "Structure: Mixed (Hazel)";
+  else label.textContent = "Structure: Dense (Brown)";
 
-/* ---------- Sequence render (center highlight) ---------- */
-function renderSequenceString(seqStr){
-  const container = $('sequenceBox');
-  if(!container) return;
-  container.innerHTML = '';
-  const center = Math.floor(seqStr.length / 2);
-  for(let i=0;i<seqStr.length;i++){
-    const span = document.createElement('span');
-    span.textContent = seqStr[i];
-    if(i === center){
-      span.classList.add('mut-highlight');
-    }
-    container.appendChild(span);
-  }
-}
-
-/* ---------- UI wiring ---------- */
-function wireUI(){
-  // Apply button
-  $('applyBtn').addEventListener('click', recomputeAndApply);
-
-  // Advanced toggle
-  const advToggle = $('advancedToggle');
-  const advArea = $('advancedArea');
-  advToggle.addEventListener('click', async function(){
-    const expanded = advArea.hasAttribute('hidden') ? false : true;
-    if(!expanded){
-      // reveal + init advanced components (IGV, sequence) on first open
-      advArea.removeAttribute('hidden');
-      advToggle.setAttribute('aria-expanded','true');
-      advToggle.textContent = 'Advanced view ▴';
-      // init IGV if not yet
-      if(!igvBrowser){
-        setStatusWarn('Loading IGV...');
-        const ok = await initIGV('igv-container');
-        if(ok){ setStatusOK('Online'); }
-        else { setStatusWarn('IGV failed'); }
-        // attempt annotation
-        if(igvBrowser) await addSnpAnnotation(CONFIG.colors.blue);
-      }
-      // fetch sequence and render
-      loadAndRenderSequence();
-    } else {
-      advArea.setAttribute('hidden','');
-      advToggle.setAttribute('aria-expanded','false');
-      advToggle.textContent = 'Advanced view ▾';
-    }
-  });
-
-  // auto-recompute when selects change
-  ['snp1','snp2','snp3'].forEach(id => {
-    const el = $(id);
-    if(el) el.addEventListener('change', recomputeAndApply);
+  // Animate Atoms
+  atoms.forEach((atom, i) => {
+    // Brown (Low Score) = Dense, Clustered, Organized, Darker
+    // Blue (High Score) = Spread out, Chaotic, Lighter
+    
+    // Scale: Brown is big/clumped (1.2), Blue is small/sparse (0.6)
+    const scale = score > 0.5 ? (0.5 + Math.random()*0.4) : (1.0 + Math.random()*0.3);
+    
+    // Radius: Brown = square-ish, Blue = round
+    const radius = score > 0.5 ? '50%' : '20%';
+    
+    // Transform
+    atom.style.transform = `scale(${scale})`;
+    atom.style.borderRadius = radius;
+    atom.style.backgroundColor = color;
+    atom.style.opacity = score > 0.5 ? 0.6 : 1; // Dense pigment is opaque
   });
 }
 
-/* ---------- Sequence loader with fallback ---------- */
-async function loadAndRenderSequence(){
-  const chr = CONFIG.variant.chr;
-  const pos = CONFIG.variant.pos;
-  const flank = CONFIG.flank;
-  const start0 = pos - flank - 1;
-  const end = pos + flank;
-  // try UCSC API
-  const seq = await fetchSequenceUCSC(chr, start0, end, 8000);
-  if(seq && seq.length >= (flank*2 + 1)){
-    renderSequenceString(seq);
-    setStatusOK('Online');
-    return;
-  }
-  // fallback: built-in demo sequence (center base A)
-  const left = 'CTGGAAGTCCGTTGACCTGAGATTA'; //25
-  const center = 'A';
-  const right = 'AGCTAGCTGCTAGGCTAGCTGNN';
-  const fallback = (left + center + right).slice(0, 51);
-  renderSequenceString(fallback);
-  setStatusWarn('Offline (fallback)');
-}
+// Init
+calculate();
 
-/* ---------- Init ---------- */
-(function init(){
-  try {
-    wireUI();
-    // initial recompute (defaults)
-    setTimeout(recomputeAndApply, 320);
-    // set initial status to warn (advanced not loaded)
-    setStatusWarn('Advanced view collapsed');
-    // draw static gene diagram (will be redrawn when open/after recompute)
-    drawGeneDiagram('geneSvgWrap', CONFIG.colors.blue);
-  } catch(e){
-    console.error('Init error:', e);
-    setStatusErr('Initialization error');
-  }
-})();
 </script>
 </body>
 </html>
-
